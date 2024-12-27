@@ -340,24 +340,27 @@ def get_option_market_data_by_id(id, info=None):
     """Returns the option market data for a stock, including the greeks,
     open interest, change of profit, and adjusted mark price.
 
-    :param id: The id of the stock.
-    :type id: str
+    :param id: The id of the option.
+    :type id: str or list
     :param info: Will filter the results to get a specific value.
     :type info: Optional[str]
     :returns: Returns a dictionary of key/value pairs for the stock. \
     If info parameter is provided, the value of the key that matches info is extracted.
 
     """
-    instrument = get_option_instrument_data_by_id(id)
-    if instrument is None:
-      # e.g. 503 Server Error: Service Unavailable for url: https://api.robinhood.com/options/instruments/d1058013-09a2-4063-b6b0-92717e17d0c0/
-      return None  # just return None which the caller can easily check; do NOT use faked empty data, it will only cause future problem
-    else:
-      payload = {
-          "instruments" : instrument['url']
-      }
-      url = marketdata_options_url()
-      data = request_get(url, 'results', payload)
+    payload = ""
+
+    if isinstance(id, str):
+        payload = "ids=" + id
+    elif isinstance(id, list):
+        for index, o_id in enumerate(id):
+            if index == 0:
+                payload = "ids=" + o_id
+            if index >= 1:
+                payload += "," + o_id
+
+    url = marketdata_options_url()
+    data = request_get(url, 'results', payload)
 
     return(filter_data(data, info))
 
